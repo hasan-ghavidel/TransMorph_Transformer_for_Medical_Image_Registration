@@ -3,6 +3,5 @@ torch
 torchvision
 natsort
 numpy
-mathplotlib
 scikit-image
 timm
