@@ -27,19 +27,22 @@ class Logger(object):
 
 def main():
     batch_size = 1
-    atlas_dir = 'Path_to_IXI_data/atlas.pkl'
-    train_dir = 'Path_to_IXI_data/Train/'
-    val_dir = 'Path_to_IXI_data/Val/'
-    weights = [1, 1] # loss weights
+    atlas_dir = os.path.expanduser('~/Semester3/Project/Datasets/IXI_data/atlas.pkl')
+    train_dir = os.path.expanduser('~/Semester3/Project/Datasets/IXI_data/Train/')
+    val_dir = os.path.expanduser('~/Semester3/Project/Datasets/IXI_data/Val/')
+
+    weights = [1, 1]      #loss weights
     save_dir = 'TransMorph_ncc_{}_diffusion_{}/'.format(weights[0], weights[1])
+
     if not os.path.exists('experiments/'+save_dir):
         os.makedirs('experiments/'+save_dir)
     if not os.path.exists('logs/'+save_dir):
         os.makedirs('logs/'+save_dir)
+
     sys.stdout = Logger('logs/'+save_dir)
-    lr = 0.0001 # learning rate
+    lr = 0.0001           #learning rate
     epoch_start = 0
-    max_epoch = 500 #max traning epoch
+    max_epoch = 500       #max traning epoch
     cont_training = False #if continue training
 
     '''
@@ -81,6 +84,13 @@ def main():
                                        trans.NumpyType((np.float32, np.int16))])
     train_set = datasets.IXIBrainDataset(glob.glob(train_dir + '*.pkl'), atlas_dir, transforms=train_composed)
     val_set = datasets.IXIBrainInferDataset(glob.glob(val_dir + '*.pkl'), atlas_dir, transforms=val_composed)
+     
+    if len(train_set) == 0:
+        raise ValueError(f"No training data found in directory: {train_dir}")
+    if len(val_set) == 0:
+        raise ValueError(f"No validation data found in directory: {val_dir}")
+
+
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
     val_loader = DataLoader(val_set, batch_size=1, shuffle=False, num_workers=4, pin_memory=True, drop_last=True)
 
@@ -90,6 +100,8 @@ def main():
     criterions += [losses.Grad3d(penalty='l2')]
     best_dsc = 0
     writer = SummaryWriter(log_dir='logs/'+save_dir)
+
+    
     for epoch in range(epoch_start, max_epoch):
         print('Training Starts')
         '''
@@ -201,7 +213,7 @@ if __name__ == '__main__':
     '''
     GPU configuration
     '''
-    GPU_iden = 1
+    GPU_iden = 0
     GPU_num = torch.cuda.device_count()
     print('Number of GPU: ' + str(GPU_num))
     for GPU_idx in range(GPU_num):
